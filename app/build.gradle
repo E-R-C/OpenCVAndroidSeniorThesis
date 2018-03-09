@@ -4,7 +4,7 @@ android {
     compileSdkVersion 27
     defaultConfig {
         applicationId "edu.hendrix.huynhem.buildingopencv"
-        minSdkVersion 19
+        minSdkVersion 23
         targetSdkVersion 27
         versionCode 1
         versionName "1.0"
@@ -36,4 +36,7 @@ dependencies {
     androidTestImplementation 'com.android.support.test:runner:1.0.1'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
     compile project(':opencv_java3')
+    compile 'com.google.code.gson:gson:2.8.1'
+    compile "com.android.support:support-v4:27.1.0"
+
 }

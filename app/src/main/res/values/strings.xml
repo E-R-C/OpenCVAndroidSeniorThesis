@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">BuildingOpenCV</string>
+    <string name="title_activity_image_train_classify">imageTrainClassify</string>
+    <string name="TrainingString">Trained %1$d/%2$d</string>
 </resources>
