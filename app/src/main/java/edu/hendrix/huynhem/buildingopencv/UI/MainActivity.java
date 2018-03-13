@@ -53,6 +53,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Button chooseFromGallery = findViewById(R.id.PicFromGalButton);
+        requestPermissions();
         chooseFromGallery.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {

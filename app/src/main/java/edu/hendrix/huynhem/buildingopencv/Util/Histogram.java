@@ -14,14 +14,19 @@ public class Histogram<K> {
         map = new HashMap<>();
     }
 
-    public void bump(K k){
+    public void bump(K k, int amount){
         if (!map.keySet().contains(k)){
-            map.put(k,1);
+            map.put(k,amount);
 
         } else {
-            map.put(k, map.get(k) + 1);
+            map.put(k, map.get(k) + amount);
         }
     }
+
+    public void bump(K k){
+        bump(k, 1);
+    }
+
 
     public void clear(){
         map.clear();
@@ -37,6 +42,12 @@ public class Histogram<K> {
             }
         }
         return bestK;
+    }
+
+    public void mergeInPlace(Histogram<K> otherHist){
+        for(K key: otherHist.map.keySet()){
+            bump(key, otherHist.map.get(key));
+        }
     }
 
 }

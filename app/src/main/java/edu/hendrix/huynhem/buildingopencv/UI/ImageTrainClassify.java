@@ -12,8 +12,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
-import java.util.List;
 
+import edu.hendrix.huynhem.buildingopencv.Models.BSOC.BSOCModel;
 import edu.hendrix.huynhem.buildingopencv.Models.BaseModelInterface;
 import edu.hendrix.huynhem.buildingopencv.Models.ClassifyWrapper;
 import edu.hendrix.huynhem.buildingopencv.Models.KnnTrainModel;
@@ -45,12 +45,11 @@ public class ImageTrainClassify extends Activity implements ClassifyWrapper.Clas
         setContentView(R.layout.activity_image_train_classify);
         Bundle args = getIntent().getExtras();
         fileNames = args.getStringArrayList(IMAGE_NAME_ARRAY_KEY);
-//        Log.d(LOG_TAG, fileNames.get(0));
         final TextView labelTextView = findViewById(R.id.LabelText);
         updateNumImages();
         trainButton = findViewById(R.id.TrainButton);
         // TODO: change the model based on the selection from the spinner;
-        model = new KnnTrainModel();
+        model = new BSOCModel();
         dataList = new ArrayList<>();
         outputTextView = findViewById(R.id.outputTextView);
 
@@ -58,13 +57,17 @@ public class ImageTrainClassify extends Activity implements ClassifyWrapper.Clas
             @Override
             public void onClick(View view) {
                 if (!labelTextView.getText().toString().equals("")){
+                    model.dealloc();
+                    // change the following line to change the model type
+                    model = model.constructNew();
                     TrainWrapper tw = new TrainWrapper(model);
                     tw.setListener(activtyReference);
                     ListLabelTuple llt = new ListLabelTuple(fileNames, labelTextView.getText().toString());
-                    tw.execute(llt);
+                    dataList.add(llt);
+                    tw.execute(dataList.toArray(new ListLabelTuple[dataList.size()]));
                     trainButton.setEnabled(false);
                     trainButton.setText(getText(R.string.AlreadyTrained));
-                    dataList.add(llt);
+                    labelTextView.setText("");
                 } else {
                     Toast.makeText(view.getContext(),"Give the image(s) a label!",Toast.LENGTH_SHORT).show();
                 }

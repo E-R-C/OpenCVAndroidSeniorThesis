@@ -47,7 +47,7 @@ public class RoundRobinWrapper extends AsyncTask<ListLabelTuple, Integer, Double
             chosenLabel = labels.remove(0);
             BaseModelInterface model2 = model.constructNew();
             for(int j = 0; j < labels.size(); j++){
-                model2.train(files.get(j), labels.get(j));
+                model2.incrementalTrain(files.get(j), labels.get(j));
             }
             String result = model2.classify(chosenFile);
             if(result.equals(chosenLabel)){

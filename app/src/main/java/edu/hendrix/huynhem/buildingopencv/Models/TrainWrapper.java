@@ -2,7 +2,6 @@ package edu.hendrix.huynhem.buildingopencv.Models;
 
 import android.os.AsyncTask;
 import android.util.Log;
-import android.widget.ProgressBar;
 
 
 import java.util.List;
@@ -26,7 +25,7 @@ public class TrainWrapper extends AsyncTask<ListLabelTuple, Integer, Void> {
     private void trainAll(List<String> strings, String label) {
         for (int i = 0; i < strings.size(); i++){
             String s = strings.get(i);
-            model.train(s, label);
+            model.incrementalTrain(s, label);
             publishProgress(i + 1, strings.size());
         }
     }
