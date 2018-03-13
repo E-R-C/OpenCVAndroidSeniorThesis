@@ -1,6 +1,6 @@
 package edu.hendrix.huynhem.buildingopencv.Models;
 
-import android.os.AsyncTask;
+import android.util.Log;
 
 import org.opencv.core.DMatch;
 import org.opencv.core.Mat;
@@ -22,10 +22,10 @@ import edu.hendrix.huynhem.buildingopencv.Util.Histogram;
  *
  */
 
-public class KnnTrainModel extends AsyncTask<String,Integer,ArrayList<String>> implements TrainerInterface{
+public class KnnTrainModel implements BaseModelInterface {
 
     // Default create(int nfeatures = 500, float scaleFactor = 1.2f, int nlevels = 8, int edgeThreshold = 31, int firstLevel = 0, int WTA_K = 2, int scoreType = ORB::HARRIS_SCORE, int patchSize = 31, int fastThreshold = 20)
-
+    private static final String LOG_TAG = "KNNTRAINMODEL";
     static final int NFEATURES = 500, NLEVELS = 8, EDGETHRESHOLD = 31, FIRSTLEVEL = 0,
             WTA_K = 2, SCORETYPE = ORB.FAST_SCORE, PATCHSIZE = 31, FASTTHRESHOLD = 20;
     static final float SCALEFACTOR = 1.2f;
@@ -38,6 +38,7 @@ public class KnnTrainModel extends AsyncTask<String,Integer,ArrayList<String>> i
     int k = 11;
     List<String> labels;
     Histogram<String> bestHist;
+
     public KnnTrainModel(){
         orb = ORB.create(NFEATURES,SCALEFACTOR,NLEVELS,EDGETHRESHOLD,FIRSTLEVEL,WTA_K,SCORETYPE,PATCHSIZE,FASTTHRESHOLD);
         descriptors  = new Mat();
@@ -47,18 +48,9 @@ public class KnnTrainModel extends AsyncTask<String,Integer,ArrayList<String>> i
     }
 
 
+
     // The first arguement in strings should be the label, This is poor design, it should be changed later
 
-    @Override
-    protected ArrayList<String> doInBackground(String... strings) {
-        String label = strings[0];
-        // Construct an arraylist from these strings,
-        // the signature of this might be changed to take in an arraylist if I think it's necessary
-        ArrayList<String> filenames = new ArrayList<>(
-                Arrays.asList(Arrays.copyOfRange(strings, 1, strings.length)));
-        trainAll(filenames, label);
-        return null;
-    }
 
     public KnnTrainModel(int k){
         this();
@@ -66,8 +58,14 @@ public class KnnTrainModel extends AsyncTask<String,Integer,ArrayList<String>> i
     }
 
     @Override
+    public BaseModelInterface constructNew() {
+        return new KnnTrainModel();
+    }
+
+    @Override
     public void trainAll(List<String> strings, String label) {
-        for (String s : strings){
+        for (int i = 0; i < strings.size(); i++){
+            String s = strings.get(i);
             train(s, label);
         }
     }
@@ -81,6 +79,13 @@ public class KnnTrainModel extends AsyncTask<String,Integer,ArrayList<String>> i
         orb.compute(image,ignoredKeypoints,newDesc);
         descriptors.push_back(newDesc);
 
+//        StringBuilder sb = new StringBuilder();
+//        for(int i = 0; i < newDesc.cols(); i++){
+//            sb.append(Arrays.toString(newDesc.get(0,i)));
+//            sb.append(" ");
+//        }
+//        Log.d(LOG_TAG, sb.toString());
+
         // Interning could make the list take up less space
 //        label = label.intern();
         labels.addAll(Collections.nCopies(newDesc.rows(), label));
@@ -90,6 +95,8 @@ public class KnnTrainModel extends AsyncTask<String,Integer,ArrayList<String>> i
         image.release();
         newDesc.release();
     }
+
+
 
     @Override
     public String classify(String fileLocation) {
@@ -119,6 +126,5 @@ public class KnnTrainModel extends AsyncTask<String,Integer,ArrayList<String>> i
         image.release();
         return bestHist.getMax();
     }
-
 
 }

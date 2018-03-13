@@ -56,11 +56,16 @@ public class MainActivity extends Activity {
         chooseFromGallery.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent i = new Intent(Intent.ACTION_PICK);
-                i.setType("image/*");
-                i.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-                i.setAction(Intent.ACTION_GET_CONTENT);
-                startActivityForResult(i, REQUEST_IMAGE_FROM_GAL);
+                if (!hasPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)){
+                    requestPermissions();
+                } else {
+                    Intent i = new Intent(Intent.ACTION_PICK);
+                    i.setType("image/*");
+                    i.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                    i.setAction(Intent.ACTION_GET_CONTENT);
+                    startActivityForResult(i, REQUEST_IMAGE_FROM_GAL);
+                }
+
             }
         });
         Button captureNewImageButton = findViewById(R.id.PicFromCam);
@@ -154,16 +159,16 @@ public class MainActivity extends Activity {
                 int numberOfImages = data.getClipData().getItemCount();
                 for (int i = 0; i < numberOfImages; i++) {
                     Log.d(LOG_TAG, data.getClipData().getItemAt(i).getUri().toString());
-                    filenames.add(FilePather.getFilePath(this.getApplicationContext(), data.getClipData().getItemAt(i).getUri()));
+                    filenames.add(FilePather.getFilePath(this, data.getClipData().getItemAt(i).getUri()));
                 }
-                intent.putExtra(ImageTrainClassify.IMAGE_NAME_ARRAY_KEY,filenames);
-                startActivity(intent);
+
             } else {
                 Log.d(LOG_TAG, "No data selected in Clip Data");
                 final Uri imageUri = data.getData();
                 filenames.add(FilePather.getFilePath(this,imageUri));
-                startActivity(intent);
             }
+            intent.putExtra(ImageTrainClassify.IMAGE_NAME_ARRAY_KEY,filenames);
+            startActivity(intent);
         }
     }
 

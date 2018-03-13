@@ -1,65 +1,109 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     tools:context="edu.hendrix.huynhem.buildingopencv.UI.ImageTrainClassify">
 
-    <LinearLayout
-        android:id="@+id/model_setting_container"
+    <RelativeLayout
+        android:id="@+id/ActionsLayout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-
-        <Spinner
-            android:id="@+id/spinner"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentStart="true"
-            android:layout_alignParentTop="true"
-            android:layout_weight="1"
-            android:entries="KNN" />
+        android:layout_height="match_parent"
+        android:layout_weight="1">
 
         <TextView
-            android:id="@+id/LabelText"
+            android:id="@+id/NumSelectedImages"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="2"
-            android:editable="true"
-            android:hint="Label" />
-    </LinearLayout>
+            android:text="@string/number_of_selected_images" />
 
+        <ProgressBar
+            android:id="@+id/ClassificationBar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/ClassifyGalButton" />
 
-    <Button
-        android:id="@+id/TrainButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/model_setting_container"
-        android:text="Train Model" />
+        <LinearLayout
+            android:id="@+id/model_setting_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/NumSelectedImages"
+            android:orientation="horizontal">
 
-    <TextView
-        android:id="@+id/textView2"
+            <Spinner
+                android:id="@+id/modelSpinner"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+
+            <EditText
+                android:id="@+id/LabelText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="2"
+                android:ems="10" />
+
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/ClassifyGalButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/TrainedStatusText"
+            android:text="Classify image From Gal" />
+
+        <Button
+            android:id="@+id/TrainButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/model_setting_container"
+            android:text="@string/train_model" />
+
+        <EditText
+            android:id="@+id/outputTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_below="@+id/ClassificationBar"
+            android:ems="10"
+            android:inputType="textMultiLine" />
+
+        <Button
+            android:id="@+id/AddMoreImagesButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_above="@+id/TrainedStatusText"
+            android:layout_toEndOf="@+id/TrainButton"
+            android:text="Train More Images" />
+
+        <TextView
+            android:id="@+id/TrainedStatusText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_below="@+id/TrainButton"
+            android:inputType="textMultiLine"
+            android:text="@string/TrainingString" />
+
+        <Button
+            android:id="@+id/RoundRobinButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_above="@+id/ClassificationBar"
+            android:layout_toEndOf="@+id/ClassifyGalButton"
+            android:text="Round Robin" />
+    </RelativeLayout>
+
+    <ListView
+        android:id="@+id/dataHighlighted"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentStart="true"
-        android:layout_below="@+id/TrainButton"
-        android:text="@string/TrainingString" />
+        android:layout_height="match_parent"
+        android:layout_weight="1">
 
-    <Button
-        android:id="@+id/ClassifyGalButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/textView2"
-        android:text="Classify An Image from Gallery" />
+    </ListView>
 
-    <EditText
-        android:id="@+id/outputTextView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentStart="true"
-        android:layout_below="@+id/ClassifyGalButton"
-        android:ems="10"
-        android:inputType="textMultiLine" />
 
-</RelativeLayout>
+</LinearLayout>

@@ -7,6 +7,7 @@ import android.net.Uri;
 import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
+import android.util.Log;
 
 /**
  *
@@ -63,6 +64,7 @@ public class FilePather {
         } else if ("file".equalsIgnoreCase(uri.getScheme())) {
             return uri.getPath();
         }
+        Log.d("FILEPATHER", uri.getScheme());
         return null;
     }
     public static boolean isExternalStorageDocument(Uri uri) {
