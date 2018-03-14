@@ -1,11 +1,8 @@
 package edu.hendrix.huynhem.buildingopencv.Models.BSOC;
 
-import android.support.annotation.NonNull;
 import android.util.SparseArray;
 
 import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.PriorityQueue;
 import java.util.Stack;
 
@@ -36,7 +33,7 @@ public class EdgePriorityQueue {
     public Tuple<Integer, Integer> getNextTuple(){
         Edge e = pq.poll();
         unusedEdges.push(e);
-        return new Tuple<Integer,Integer>(e.i1, e.i2);
+        return new Tuple<>(e.i1, e.i2);
     }
 
     public void pushEdge(int start, int end, int weight){
@@ -77,7 +74,7 @@ public class EdgePriorityQueue {
 
 
         @Override
-        public int compareTo(@NonNull Edge edge) {
+        public int compareTo(Edge edge) {
             return Integer.compare(weight, edge.weight);
         }
     }

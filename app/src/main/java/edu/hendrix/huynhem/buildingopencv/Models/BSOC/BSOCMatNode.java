@@ -8,16 +8,19 @@ import edu.hendrix.huynhem.buildingopencv.Util.Histogram;
  *
  */
 
-public class BSOCMatWrapper {
+public class BSOCMatNode {
     private static final int bits = 8;
+    private static final int defaultMergeCount = 0;
     private Mat descriptor;
     private int[] counts;
     private Histogram<String> labelHistogram;
-    public BSOCMatWrapper(Mat descriptor, String label){
+    private int mergeCount;
+    public BSOCMatNode(Mat descriptor, String label){
         this.descriptor = descriptor;
         instantiateCounts();
         labelHistogram = new Histogram<>();
         labelHistogram.bump(label);
+        mergeCount = defaultMergeCount;
     }
 
     public void setNewValues(Mat newDesc, String label){
@@ -26,6 +29,7 @@ public class BSOCMatWrapper {
         instantiateCounts();
         labelHistogram.clear();
         labelHistogram.bump(label);
+        mergeCount = defaultMergeCount;
     }
 
 
@@ -55,7 +59,7 @@ public class BSOCMatWrapper {
     public String getLabel(){
         return labelHistogram.getMax();
     }
-    public void mergeInPlace(BSOCMatWrapper otherBsocNode){
+    public void mergeInPlace(BSOCMatNode otherBsocNode){
 //        Note use to modify the Mat descriptor.put();
         // Todo: Double check this with Dr. Ferrer
         int[] ocounts = otherBsocNode.getCounts();
@@ -73,12 +77,13 @@ public class BSOCMatWrapper {
                 descriptor.put(0,i/bits,new byte[]{currentNum});
             }
         }
-        // Todo: Modify the current Mat to reflect the new counts;
-        // This is the most error prone part of the BSOC implementation
-
-
+        // TODO Double check this merge counting system
+        mergeCount += otherBsocNode.getMergeCount();
         labelHistogram.mergeInPlace(otherBsocNode.labelHistogram);
+    }
 
+    public int getMergeCount(){
+        return mergeCount;
     }
 
     public void dealloc(){

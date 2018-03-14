@@ -1,7 +1,5 @@
 package edu.hendrix.huynhem.buildingopencv.Models.BSOC;
 
-import android.util.Log;
-
 import org.opencv.core.Mat;
 
 import edu.hendrix.huynhem.buildingopencv.Util.Tuple;
@@ -13,7 +11,7 @@ import edu.hendrix.huynhem.buildingopencv.Util.Tuple;
 public class BSOCGraph {
     private static final String LOG_TAG = "BSOC Graph";
     private static final int defaultNodes = 100;
-    BSOCMatWrapper[] nodes;
+    BSOCMatNode[] nodes;
     // We can always assume that the buffer index is not a node in our graph
     int bufferIndex = 0;
     int nodeCount = 0;
@@ -22,12 +20,12 @@ public class BSOCGraph {
         this(defaultNodes);
     }
     public BSOCGraph(int numNodes){
-        nodes = new BSOCMatWrapper[numNodes];
+        nodes = new BSOCMatNode[numNodes];
         epq = new EdgePriorityQueue(numNodes);
     }
 
 
-    public BSOCMatWrapper getNearestNeighbor(Mat toTest){
+    public BSOCMatNode getNearestNeighbor(Mat toTest){
         int bestDist = Integer.MAX_VALUE;
         int bestIndex = -1;
 
@@ -45,7 +43,7 @@ public class BSOCGraph {
 
     public void add(Mat dArray, String label){
         if (nodeCount < nodes.length){
-            BSOCMatWrapper newNode = new BSOCMatWrapper(dArray, label);
+            BSOCMatNode newNode = new BSOCMatNode(dArray, label);
             nodeCount++;
             addNode(newNode);
         } else {
@@ -54,7 +52,7 @@ public class BSOCGraph {
         }
     }
 
-    private void addNode(BSOCMatWrapper node){
+    private void addNode(BSOCMatNode node){
         nodes[bufferIndex] = node;
         if (bufferIndex == nodes.length - 1){
             // If we have one free space, then we want to add our node to the graph
@@ -79,20 +77,19 @@ public class BSOCGraph {
     public Mat getDescriptorsAsMat(){
         return getDescriptorsAsMat(nodes);
     }
-    private static Mat getDescriptorsAsMat(BSOCMatWrapper[] nodeslist){
+    private static Mat getDescriptorsAsMat(BSOCMatNode[] nodeslist){
         Mat result = new Mat();
         for(int i = 0; i < nodeslist.length; i++){
             result.push_back(nodeslist[i].getDescriptor());
         }
-
-
         return result;
     }
-    private void insecureInsert(int index, BSOCMatWrapper node){
+    private void insecureInsert(int index, BSOCMatNode node){
         nodes[index] = node;
         for(int i = 0; i < bufferIndex; i++){
             if (i != index){
                 int weight = calculateHamming(nodes[i], nodes[index]);
+                weight *= nodes[i].getMergeCount() > nodes[index].getMergeCount() ? nodes[i].getMergeCount() : nodes[index].getMergeCount();
                 if (i < index){
                     epq.pushEdge(i, index, weight);
                 } else if (i > index){
@@ -123,7 +120,7 @@ public class BSOCGraph {
         return total;
     }
 
-    private static int calculateHamming(BSOCMatWrapper one, BSOCMatWrapper two){
+    private static int calculateHamming(BSOCMatNode one, BSOCMatNode two){
         return calculateHamming(one.getDescriptor(), two.getDescriptor());
     }
 

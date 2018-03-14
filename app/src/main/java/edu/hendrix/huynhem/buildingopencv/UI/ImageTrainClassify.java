@@ -16,7 +16,6 @@ import java.util.ArrayList;
 import edu.hendrix.huynhem.buildingopencv.Models.BSOC.BSOCModel;
 import edu.hendrix.huynhem.buildingopencv.Models.BaseModelInterface;
 import edu.hendrix.huynhem.buildingopencv.Models.ClassifyWrapper;
-import edu.hendrix.huynhem.buildingopencv.Models.KnnTrainModel;
 import edu.hendrix.huynhem.buildingopencv.Models.ListLabelTuple;
 import edu.hendrix.huynhem.buildingopencv.Models.RoundRobinWrapper;
 import edu.hendrix.huynhem.buildingopencv.Models.TrainModelAsyncInterface;
