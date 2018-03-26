@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+    <resources>
+    <!--All models must be labeled as "ModelName Number"-->
+        <string-array name="ModelTypes">
+            <item>KNN 3</item>
+            <item>KNN 9</item>
+            <item>BSOC 32</item>
+            <item>BSOC 64</item>
+            <item>BSOC 128</item>
+        </string-array>
+    </resources>

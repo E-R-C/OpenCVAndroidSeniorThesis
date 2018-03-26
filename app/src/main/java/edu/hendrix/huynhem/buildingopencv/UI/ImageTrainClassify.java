@@ -1,78 +1,97 @@
 package edu.hendrix.huynhem.buildingopencv.UI;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.app.Activity;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import edu.hendrix.huynhem.buildingopencv.Models.BSOC.BSOCModel;
 import edu.hendrix.huynhem.buildingopencv.Models.BaseModelInterface;
 import edu.hendrix.huynhem.buildingopencv.Models.ClassifyWrapper;
+import edu.hendrix.huynhem.buildingopencv.Models.KnnTrainModel;
 import edu.hendrix.huynhem.buildingopencv.Models.ListLabelTuple;
-import edu.hendrix.huynhem.buildingopencv.Models.RoundRobinWrapper;
 import edu.hendrix.huynhem.buildingopencv.Models.TrainModelAsyncInterface;
 import edu.hendrix.huynhem.buildingopencv.Models.TrainWrapper;
 import edu.hendrix.huynhem.buildingopencv.R;
 import edu.hendrix.huynhem.buildingopencv.Util.GalleryUtil;
 
-public class ImageTrainClassify extends Activity implements ClassifyWrapper.ClassifyWrapperInterface, TrainModelAsyncInterface, RoundRobinWrapper.RoundRobinInterface{
+public class ImageTrainClassify extends Activity implements ClassifyWrapper.ClassifyWrapperInterface, TrainModelAsyncInterface{
     public static final String IMAGE_NAME_ARRAY_KEY = "IMAGE_ARRAY";
     private static final String LOG_TAG = "IMAGETRAINACTIVITY";
     private static final int REQUEST_IMAGE_FOR_CLASSIFY_FROM_GAL = 1234;
-    private static final int REQUEST_IMAGE_FOR_TRAIN_FROM_GAL = 1337;
+    private static final int REQUEST_IMAGE_FROM_GAL = 1337;
     private ArrayList<String> fileNames;
     private BaseModelInterface model;
-    private TextView trainTextView;
     private ProgressBar progressBar;
-    private Button trainButton;
-    private ArrayList<ListLabelTuple> dataList;
-    private TupleListAdapter tla;
-    private TextView outputTextView;
+    private Button trainButton, classifyFromGalButton, addMoreImagesButton, runTestButton;
+    private ArrayList<ListLabelTuple> trainDatalist, testDataList;
+    private TupleListAdapter trainListAdapter, testListAdapter;
+    private TextView trainTextView, outputTextView;
+    final HashMap<String, BaseModelInterface> modelMap = new HashMap<>();
 
+
+
+    private static final String[] modelNames = new String[]{"KNN 3", "KNN 9", "KNN 13", "BSOC 32", "BSOC 64", "BSOC 128"};
+
+
+
+    private void fillModelMap(HashMap<String, BaseModelInterface> map){
+        for(String s: this.getResources().getStringArray(R.array.ModelTypes)){
+            String[] split = s.split(" ");
+            int num = Integer.parseInt(split[1]);
+            switch (split[0]){
+                case "KNN":
+                    map.put(s, new KnnTrainModel(num));
+                    break;
+                case "BSOC":
+                    map.put(s, new BSOCModel(num));
+                    break;
+                default:
+                    Log.e(LOG_TAG, "INVALID MODEL");
+                    break;
+            }
+
+        }
+
+    }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        final ImageTrainClassify activtyReference = this;
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_image_train_classify);
-        Bundle args = getIntent().getExtras();
-        fileNames = args.getStringArrayList(IMAGE_NAME_ARRAY_KEY);
-        final TextView labelTextView = findViewById(R.id.LabelText);
-        updateNumImages();
-        trainButton = findViewById(R.id.TrainButton);
-        // TODO: change the model based on the selection from the spinner;
-        model = new BSOCModel();
-        dataList = new ArrayList<>();
-        outputTextView = findViewById(R.id.outputTextView);
 
-        trainButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (!labelTextView.getText().toString().equals("")){
-                    model.dealloc();
-                    // change the following line to change the model type
-                    model = model.constructNew();
-                    TrainWrapper tw = new TrainWrapper(model);
-                    tw.setListener(activtyReference);
-                    ListLabelTuple llt = new ListLabelTuple(fileNames, labelTextView.getText().toString());
-                    dataList.add(llt);
-                    tw.execute(dataList.toArray(new ListLabelTuple[dataList.size()]));
-                    trainButton.setEnabled(false);
-                    trainButton.setText(getText(R.string.AlreadyTrained));
-                    labelTextView.setText("");
-                } else {
-                    Toast.makeText(view.getContext(),"Give the image(s) a label!",Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
-        Button classifyFromGalButton = findViewById(R.id.ClassifyGalButton);
+        // This allows us to refer to our current activity from inside the onclicklistener
+        final ImageTrainClassify activtyReference = this;
+
+        // Grab the selected files
+        Bundle args = getIntent().getExtras();
+        assert args != null;
+        fileNames = args.getStringArrayList(IMAGE_NAME_ARRAY_KEY);
+
+        // Set the text view
+        outputTextView = findViewById(R.id.outputTextView);
+        trainTextView = findViewById(R.id.TrainedStatusText);
+        updateNumImages();
+        // This initializes the spinner
+        final Spinner modelSpinner = findViewById(R.id.modelSpinner);
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,R.array.ModelTypes,android.R.layout.simple_spinner_item);
+        modelSpinner.setAdapter(adapter);
+
+        // Setup the buttons
+        classifyFromGalButton = findViewById(R.id.ClassifyGalButton);
         classifyFromGalButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -83,49 +102,142 @@ public class ImageTrainClassify extends Activity implements ClassifyWrapper.Clas
                 startActivityForResult(i, REQUEST_IMAGE_FOR_CLASSIFY_FROM_GAL);
             }
         });
-        Button addMoreImages = findViewById(R.id.AddMoreImagesButton);
-        addMoreImages.setOnClickListener(new View.OnClickListener() {
+        addMoreImagesButton = findViewById(R.id.AddMoreImagesButton);
+        addMoreImagesButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Intent i = new Intent(Intent.ACTION_PICK);
                 i.setType("image/*");
                 i.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
                 i.setAction(Intent.ACTION_GET_CONTENT);
-                startActivityForResult(i, REQUEST_IMAGE_FOR_TRAIN_FROM_GAL);
+                startActivityForResult(i, REQUEST_IMAGE_FROM_GAL);
             }
         });
-        trainTextView = findViewById(R.id.TrainedStatusText);
-        progressBar = findViewById(R.id.ClassificationBar);
-        ListView dataHighlighted = findViewById(R.id.dataHighlighted);
-        tla = new TupleListAdapter(this, R.layout.tuple_list_row,dataList);
-        dataHighlighted.setAdapter(tla);
-        Button roundRobinButton = findViewById(R.id.RoundRobinButton);
-        roundRobinButton.setOnClickListener(new View.OnClickListener() {
+        runTestButton = findViewById(R.id.runTest);
+        runTestButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                RoundRobinWrapper rrw = new RoundRobinWrapper(model);
-                rrw.setListener(activtyReference);
-                rrw.execute(dataList.toArray(new ListLabelTuple[dataList.size()]));
+                ClassifyWrapper model2 = new ClassifyWrapper(model);
+                model2.setListener(activtyReference);
+                model2.execute(toListOfFiles(testDataList));
             }
         });
+        trainButton = findViewById(R.id.TrainButton);
+        trainButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                model = switchModels(modelSpinner.getSelectedItem().toString());
+                train(model, trainDatalist);
+                classifyFromGalButton.setEnabled(true);
+            }
+        });
+        modelSpinner.setOnItemSelectedListener(new modelSpinnerItemSelectedListener(trainButton));
+
+        progressBar = findViewById(R.id.ClassificationBar);
+
+        // Initialize Empty lists for our ListViews
+        trainDatalist = new ArrayList<>();
+        testDataList = new ArrayList<>();
+
+        // Initialize our ListViews
+        ListView trainData = findViewById(R.id.train_data_list);
+        trainListAdapter = new TupleListAdapter(this, R.layout.tuple_list_row, trainDatalist);
+        trainData.setAdapter(trainListAdapter);
+
+        ListView testData = findViewById(R.id.test_data_list);
+        testListAdapter = new TupleListAdapter(this, R.layout.tuple_list_row, testDataList);
+        testData.setAdapter(testListAdapter);
+
+        // Generate the alert for the first time instance:
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(R.string.label);
+        builder.setMessage("Give the selected image(s) a label and tell me where to put it");
+        final EditText edittext = new EditText(getApplicationContext());
+        builder.setView(edittext);
+        // Todo Fix the fact that this code is basically a copy of the alert in response
+        builder.setPositiveButton("Train", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                ListLabelTuple llt = new ListLabelTuple(fileNames, edittext.getText().toString());
+                trainDatalist.add(llt);
+                trainListAdapter.notifyDataSetChanged();
+            }
+        });
+        builder.setNeutralButton("Test", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                ListLabelTuple llt = new ListLabelTuple(fileNames, edittext.getText().toString());
+                testDataList.add(llt);
+                testListAdapter.notifyDataSetChanged();
+            }
+        });
+        builder.show();
+
+    }
+
+    private BaseModelInterface switchModels(String modelName){
+        if (modelMap.size() < 1) {
+            fillModelMap(modelMap);
+        }
+        if(model != null){
+            model.dealloc();
+        }
+        return modelMap.get(modelName).constructNew();
+
+
+    }
+    public void train(BaseModelInterface m, ArrayList<ListLabelTuple> dataList){
+        TrainWrapper tw = new TrainWrapper(m);
+        tw.setListener(this);
+        tw.execute(dataList.toArray(new ListLabelTuple[dataList.size()]));
+        trainButton.setEnabled(false);
+        trainButton.setText(getText(R.string.AlreadyTrained));
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         boolean ok = resultCode == Activity.RESULT_OK;
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(R.string.label);
+        builder.setMessage("Give the selected image(s) a label and tell me where to put it");
+        final EditText edittext = new EditText(getApplicationContext());
+        builder.setView(edittext);
+        // Todo check for blank edittext input
+        builder.setPositiveButton("Train", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                ListLabelTuple llt = new ListLabelTuple(fileNames, edittext.getText().toString());
+                trainDatalist.add(llt);
+                trainListAdapter.notifyDataSetChanged();
+            }
+        });
+        builder.setNeutralButton("Test", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                ListLabelTuple llt = new ListLabelTuple(fileNames, edittext.getText().toString());
+                testDataList.add(llt);
+                testListAdapter.notifyDataSetChanged();
+                runTestButton.setEnabled(true);
+            }
+        });
+
+
+
         if (requestCode == REQUEST_IMAGE_FOR_CLASSIFY_FROM_GAL && ok){
             ArrayList<String> filenames = GalleryUtil.extractArrayList(this, data);
-            ClassifyWrapper model2 = new ClassifyWrapper( model);
+            ClassifyWrapper model2 = new ClassifyWrapper(model);
             model2.setListener(this);
             model2.execute(GalleryUtil.arraylistToStringarray(filenames));
 
         }
-        else if (requestCode == REQUEST_IMAGE_FOR_TRAIN_FROM_GAL && ok){
+        else if (requestCode == REQUEST_IMAGE_FROM_GAL && ok){
             fileNames = GalleryUtil.extractArrayList(this, data);
             trainButton.setText(R.string.train_model);
             trainButton.setEnabled(true);
-            tla.notifyDataSetChanged();
+            trainListAdapter.notifyDataSetChanged();
             updateNumImages();
+            builder.show();
         }
     }
 
@@ -138,13 +250,24 @@ public class ImageTrainClassify extends Activity implements ClassifyWrapper.Clas
     public void publishClassifyProgress(Integer... nums) {
         progressBar.setMax(nums[1]);
         progressBar.setProgress(nums[0]);
-        Log.d(LOG_TAG, "Logged Progress for Classification");
     }
 
     @Override
     public void processClassifyFinish(ArrayList<String> labels) {
-        Log.d(LOG_TAG, "Classify Finished for Classification");
+        String[] actualLabels = toListOfLabels(testDataList);
+        int correct = 0;
+        for(int i = 0; i < labels.size(); i++){
+            if (labels.get(i).equals(actualLabels[i])){
+                correct++;
+            }
+        }
         StringBuilder sb = new StringBuilder();
+        sb.append(correct);
+        sb.append("/");
+        sb.append(labels.size());
+        sb.append(" ");
+        sb.append(((float) correct) / labels.size());
+        sb.append("%\n");
         for (String s : labels){
             sb.append(s);
             sb.append("\n");
@@ -154,20 +277,55 @@ public class ImageTrainClassify extends Activity implements ClassifyWrapper.Clas
 
     @Override
     public void publishTrainProgress(Integer... ints) {
-        Log.d(LOG_TAG, String.format(getText(R.string.TrainingString).toString(), ints));
         trainTextView.setText(String.format(getText(R.string.TrainingString).toString(), ints));
-        Log.d(LOG_TAG, "Logged Progress for Train");
+
     }
 
 
-    @Override
-    public void RobinResults(double d) {
-        outputTextView.setText((d * 100) + "% Correct");
+    private static String[] toListOfFiles(ArrayList<ListLabelTuple> labels){
+        ArrayList<String> result = new ArrayList<>();
+        int count = 0;
+        for(ListLabelTuple l: labels){
+            result.addAll(l.getFileNames());
+            count += l.getFileNames().size();
+        }
+        return result.toArray(new String[count]);
     }
 
-    @Override
-    public void RobinProgress(Integer... ints) {
-        progressBar.setMax(ints[1]);
-        progressBar.setProgress(ints[0]);
+    private static String[] toListOfLabels(ArrayList<ListLabelTuple> labels){
+        ArrayList<String> result = new ArrayList<>();
+        int count = 0;
+        for(ListLabelTuple l: labels){
+            for(String filename: l.getFileNames()){
+                result.add(l.getLabel());
+            }
+            count += l.getFileNames().size();
+        }
+        return result.toArray(new String[count]);
+    }
+
+
+    // Spinner on click listener
+    public class modelSpinnerItemSelectedListener implements AdapterView.OnItemSelectedListener{
+        int currentSelected = 0;
+        Button b;
+
+        public modelSpinnerItemSelectedListener(Button trainButton){
+            b = trainButton;
+        }
+
+        @Override
+        public void onItemSelected(AdapterView<?> adapterView, View view, int index, long id) {
+            if (index != currentSelected){
+                currentSelected = index;
+                b.setEnabled(true);
+                b.setText(R.string.retrain_model);
+            }
+        }
+
+        @Override
+        public void onNothingSelected(AdapterView<?> adapterView) {
+
+        }
     }
 }

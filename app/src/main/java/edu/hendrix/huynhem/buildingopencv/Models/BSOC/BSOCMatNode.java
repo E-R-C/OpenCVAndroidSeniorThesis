@@ -60,8 +60,6 @@ public class BSOCMatNode {
         return labelHistogram.getMax();
     }
     public void mergeInPlace(BSOCMatNode otherBsocNode){
-//        Note use to modify the Mat descriptor.put();
-        // Todo: Double check this with Dr. Ferrer
         int[] ocounts = otherBsocNode.getCounts();
         byte currentNum = 0;
         for(int i = 0; i < counts.length; i++){
@@ -77,7 +75,6 @@ public class BSOCMatNode {
                 descriptor.put(0,i/bits,new byte[]{currentNum});
             }
         }
-        // TODO Double check this merge counting system
         mergeCount += otherBsocNode.getMergeCount();
         labelHistogram.mergeInPlace(otherBsocNode.labelHistogram);
     }

@@ -105,6 +105,8 @@ public class BSOCGraph {
         nodes[index1].mergeInPlace(nodes[index2]);
         nodes[index2].dealloc();
         eraseNodeDists(index2);
+        eraseNodeDists(index1);
+        insecureInsert(index1, nodes[index1]);
         bufferIndex = index2;
     }
 
@@ -123,5 +125,8 @@ public class BSOCGraph {
     private static int calculateHamming(BSOCMatNode one, BSOCMatNode two){
         return calculateHamming(one.getDescriptor(), two.getDescriptor());
     }
-
+    public void clear(){
+        epq.clear();
+        nodes = null;
+    }
 }

@@ -1,5 +1,7 @@
 package edu.hendrix.huynhem.buildingopencv.Models.BSOC;
 
+import android.util.Log;
+
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfKeyPoint;
@@ -19,7 +21,7 @@ import edu.hendrix.huynhem.buildingopencv.Util.Histogram;
  */
 
 public class BSOCModel implements BaseModelInterface {
-    private static final String LOG_TAG = "KNNTRAINMODEL";
+    private static final String LOG_TAG = "BSOC_MODEL";
     static final int NFEATURES = 500, NLEVELS = 8, EDGETHRESHOLD = 31, FIRSTLEVEL = 0,
             WTA_K = 2, SCORETYPE = ORB.FAST_SCORE, PATCHSIZE = 31, FASTTHRESHOLD = 20;
     static final float SCALEFACTOR = 1.2f;
@@ -51,15 +53,20 @@ public class BSOCModel implements BaseModelInterface {
 
     @Override
     public void trainAll(ListLabelTuple[] llts) {
+        long start = System.currentTimeMillis();
+
         for(ListLabelTuple llt: llts){
             for(int i =0; i < llt.getFileNames().size(); i++){
                 incrementalTrain(llt.getFileNames().get(i), labels.get(i));
             }
         }
+
+        Log.d(LOG_TAG, (System.currentTimeMillis() - start) + " milli Total to Train BSOC" + clusters);
     }
 
     @Override
     public void incrementalTrain(String fileLocation, String label) {
+        long start = System.currentTimeMillis();
         Mat newDesc = new Mat();
         Mat image = Imgcodecs.imread(fileLocation,Imgcodecs.IMREAD_REDUCED_GRAYSCALE_8);
         MatOfKeyPoint ignoredKeypoints = new MatOfKeyPoint();
@@ -74,17 +81,18 @@ public class BSOCModel implements BaseModelInterface {
         ignoredKeypoints.release();
         image.release();
         newDesc.release();
+        Log.d(LOG_TAG, (System.currentTimeMillis() - start) + " milli Increment to Train BSOC " + clusters);
     }
 
     @Override
     public String classify(String fileLocation) {
+        long start = System.currentTimeMillis();
         bestHist.clear();
         Mat newDesc = new Mat();
         Mat image = Imgcodecs.imread(fileLocation,Imgcodecs.IMREAD_REDUCED_GRAYSCALE_8);
         MatOfKeyPoint ignoredKeypoints = new MatOfKeyPoint();
         orb.detect(image,ignoredKeypoints);
         orb.compute(image,ignoredKeypoints,newDesc);
-
         for(int r = 0; r < newDesc.rows(); r++){
             bestHist.bump(graph.getNearestNeighbor(newDesc.row(r)).getLabel());
         }
@@ -92,8 +100,21 @@ public class BSOCModel implements BaseModelInterface {
         ignoredKeypoints.release();
         image.release();
         newDesc.release();
+        Log.d(LOG_TAG, (System.currentTimeMillis() - start) + " milli to Classify BSOC" + clusters);
         return bestHist.getMax();
     }
+
+    /*
+    clusters:
+    32
+    64
+    128
+
+    switch to array
+
+
+     */
+
 
     @Override
     public void dealloc() {
@@ -101,5 +122,7 @@ public class BSOCModel implements BaseModelInterface {
         labels.clear();
         orb.clear();
         bfm.clear();
+        graph.clear();
+        Log.d(LOG_TAG, "Called BSOC Dealloc");
     }
 }
