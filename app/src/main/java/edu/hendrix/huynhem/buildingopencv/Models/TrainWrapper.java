@@ -22,26 +22,27 @@ public class TrainWrapper extends AsyncTask<ListLabelTuple, Integer, Void> {
 
 
 
-    private void trainAll(List<String> strings, String label, int max) {
-        int total = 0;
-        int current = 0;
+    private int trainAll(int currentCount, List<String> strings, String label, int max) {
+        int current = currentCount;
         for (int i = 0; i < strings.size(); i++){
             String s = strings.get(i);
             model.incrementalTrain(s, label);
             current += 1;
-            publishProgress(current, strings.size());
+            publishProgress(current, max);
         }
+        return current;
     }
 
 
     @Override
     protected Void doInBackground(ListLabelTuple... listLabelTuples) {
         int total = 0;
+        int currentCount = 0;
         for (ListLabelTuple t : listLabelTuples){
             total += t.getFileNames().size();
         };
         for (ListLabelTuple t : listLabelTuples){
-            trainAll(t.getFileNames(), t.getLabel(), total);
+            currentCount = trainAll(currentCount, t.getFileNames(), t.getLabel(), total);
         };
         return null;
     }

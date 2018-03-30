@@ -4,8 +4,14 @@
         <string-array name="ModelTypes">
             <item>KNN 3</item>
             <item>KNN 9</item>
+            <item>KNN 15</item>
+            <item>KNNWI 3</item>
+            <item>KNNWI 9</item>
             <item>BSOC 32</item>
             <item>BSOC 64</item>
             <item>BSOC 128</item>
+            <item>BSOCWI 32</item>
+            <item>BSOCWI 64</item>
+            <item>BSOCWI 128</item>
         </string-array>
     </resources>

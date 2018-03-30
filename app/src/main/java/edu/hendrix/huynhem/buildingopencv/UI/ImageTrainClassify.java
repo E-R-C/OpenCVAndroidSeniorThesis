@@ -20,9 +20,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import edu.hendrix.huynhem.buildingopencv.Models.BSOC.BSOCModel;
+import edu.hendrix.huynhem.buildingopencv.Models.BSOCWholeImage.BSOCModelWholeImage;
 import edu.hendrix.huynhem.buildingopencv.Models.BaseModelInterface;
 import edu.hendrix.huynhem.buildingopencv.Models.ClassifyWrapper;
 import edu.hendrix.huynhem.buildingopencv.Models.KnnTrainModel;
+import edu.hendrix.huynhem.buildingopencv.Models.KnnWholeImageModel;
 import edu.hendrix.huynhem.buildingopencv.Models.ListLabelTuple;
 import edu.hendrix.huynhem.buildingopencv.Models.TrainModelAsyncInterface;
 import edu.hendrix.huynhem.buildingopencv.Models.TrainWrapper;
@@ -45,7 +47,6 @@ public class ImageTrainClassify extends Activity implements ClassifyWrapper.Clas
 
 
 
-    private static final String[] modelNames = new String[]{"KNN 3", "KNN 9", "KNN 13", "BSOC 32", "BSOC 64", "BSOC 128"};
 
 
 
@@ -59,6 +60,12 @@ public class ImageTrainClassify extends Activity implements ClassifyWrapper.Clas
                     break;
                 case "BSOC":
                     map.put(s, new BSOCModel(num));
+                    break;
+                case "KNNWI":
+                    map.put(s, new KnnWholeImageModel(num));
+                    break;
+                case "BSOCWI":
+                    map.put(s, new BSOCModelWholeImage(num));
                     break;
                 default:
                     Log.e(LOG_TAG, "INVALID MODEL");

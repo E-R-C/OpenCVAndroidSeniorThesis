@@ -1,5 +1,7 @@
 package edu.hendrix.huynhem.buildingopencv.Models.BSOC;
 
+import android.util.Log;
+
 import org.opencv.core.Mat;
 
 import edu.hendrix.huynhem.buildingopencv.Util.Histogram;
@@ -10,7 +12,7 @@ import edu.hendrix.huynhem.buildingopencv.Util.Histogram;
 
 public class BSOCMatNode {
     private static final int bits = 8;
-    private static final int defaultMergeCount = 0;
+    private static final int defaultMergeCount = 1;
     private Mat descriptor;
     private int[] counts;
     private Histogram<String> labelHistogram;
@@ -59,7 +61,11 @@ public class BSOCMatNode {
     public String getLabel(){
         return labelHistogram.getMax();
     }
+    public Histogram<String> getLabelHistogram() {
+        return labelHistogram;
+    }
     public void mergeInPlace(BSOCMatNode otherBsocNode){
+        // Averaging
         int[] ocounts = otherBsocNode.getCounts();
         byte currentNum = 0;
         for(int i = 0; i < counts.length; i++){
@@ -75,8 +81,14 @@ public class BSOCMatNode {
                 descriptor.put(0,i/bits,new byte[]{currentNum});
             }
         }
+        // Just throw the old one away:
+//        descriptor.release();
+//        descriptor = otherBsocNode.getDescriptor().clone();
+//        Log.d("MERGER", "Merged " + otherBsocNode.mergeCount + " with " + mergeCount);
         mergeCount += otherBsocNode.getMergeCount();
-        labelHistogram.mergeInPlace(otherBsocNode.labelHistogram);
+//        Log.d("MERGER", "resulted in " + mergeCount);
+
+        labelHistogram.mergeInPlace(otherBsocNode.getLabelHistogram());
     }
 
     public int getMergeCount(){

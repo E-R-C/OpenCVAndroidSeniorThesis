@@ -3,13 +3,17 @@ package edu.hendrix.huynhem.buildingopencv.Models.BSOC;
 import android.util.Log;
 
 import org.opencv.core.CvType;
+import org.opencv.core.DMatch;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfDMatch;
 import org.opencv.core.MatOfKeyPoint;
 import org.opencv.features2d.BFMatcher;
 import org.opencv.features2d.ORB;
 import org.opencv.imgcodecs.Imgcodecs;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 import edu.hendrix.huynhem.buildingopencv.Models.BaseModelInterface;
@@ -43,7 +47,6 @@ public class BSOCModel implements BaseModelInterface {
         orb = ORB.create(NFEATURES,SCALEFACTOR,NLEVELS,EDGETHRESHOLD,FIRSTLEVEL,WTA_K,SCORETYPE,PATCHSIZE,FASTTHRESHOLD);
         bfm = BFMatcher.create(BFMatcher.BRUTEFORCE_HAMMING,true);
         bestHist = new Histogram<>();
-        labels = new ArrayList<>();
         graph = new BSOCGraph(clusters);
     }
     @Override
@@ -57,11 +60,14 @@ public class BSOCModel implements BaseModelInterface {
 
         for(ListLabelTuple llt: llts){
             for(int i =0; i < llt.getFileNames().size(); i++){
-                incrementalTrain(llt.getFileNames().get(i), labels.get(i));
+                incrementalTrain(llt.getFileNames().get(i), llt.getLabel());
             }
         }
 
         Log.d(LOG_TAG, (System.currentTimeMillis() - start) + " milli Total to Train BSOC" + clusters);
+        for(BSOCMatNode b: graph.nodes){
+            Log.d(LOG_TAG + "QUERY",b.getLabelHistogram().toString());
+        }
     }
 
     @Override
@@ -77,11 +83,34 @@ public class BSOCModel implements BaseModelInterface {
             Mat temp = newDesc.row(r);
             temp.convertTo(dest,CvType.CV_8U);
             graph.add(dest, label);
+//            graph.epq.logPeekWeight();
+//            log();
+
         }
+
         ignoredKeypoints.release();
         image.release();
         newDesc.release();
         Log.d(LOG_TAG, (System.currentTimeMillis() - start) + " milli Increment to Train BSOC " + clusters);
+
+    }
+    private void log(){
+        StringBuilder statusString = new StringBuilder();
+        StringBuilder mergeCounts = new StringBuilder();
+        for(BSOCMatNode b: graph.nodes){
+            if (b != null){
+                statusString.append(b.getLabelHistogram().toString());
+                statusString.append(", ");
+                mergeCounts.append(b.getMergeCount());
+                mergeCounts.append(",");
+            }
+        }
+        mergeCounts.append(" Buff: " + graph.bufferIndex);
+        graph.epq.logPeekWeight();
+//        mergeCounts.append(" shortestWeight " + ;)
+        Log.d(LOG_TAG, statusString.toString());
+        Log.d(LOG_TAG, mergeCounts.toString());
+
     }
 
     @Override
@@ -93,15 +122,39 @@ public class BSOCModel implements BaseModelInterface {
         MatOfKeyPoint ignoredKeypoints = new MatOfKeyPoint();
         orb.detect(image,ignoredKeypoints);
         orb.compute(image,ignoredKeypoints,newDesc);
-        for(int r = 0; r < newDesc.rows(); r++){
-            bestHist.bump(graph.getNearestNeighbor(newDesc.row(r)).getLabel());
+
+        MatOfDMatch results = new MatOfDMatch();
+        bfm.match(newDesc,graph.getDescriptorsAsMat(),results);
+
+        DMatch[] resultDMats = results.toArray();
+        Arrays.sort(resultDMats, new Comparator<DMatch>() {
+            @Override
+            public int compare(DMatch dMatch, DMatch t1) {
+                return Float.compare(dMatch.distance, t1.distance);
+            }
+        });
+
+//        String result = "";
+//        int k = 5;
+        int count = 0;
+        int index = 0;
+        while(index < resultDMats.length){
+            if(resultDMats[index].trainIdx != graph.bufferIndex){
+                bestHist.bump(graph.nodes[resultDMats[index].trainIdx].getLabel());
+                count++;
+            }
+            index++;
         }
+        String result = bestHist.getMax();
+
 
         ignoredKeypoints.release();
         image.release();
         newDesc.release();
+        Log.d(LOG_TAG, "index:  " + index + "count: " + count + "DMATlen: " + resultDMats.length);
         Log.d(LOG_TAG, (System.currentTimeMillis() - start) + " milli to Classify BSOC" + clusters);
-        return bestHist.getMax();
+        Log.d(LOG_TAG, bestHist.toString());
+        return result;
     }
 
     /*
@@ -118,11 +171,22 @@ public class BSOCModel implements BaseModelInterface {
 
     @Override
     public void dealloc() {
-        bestHist.clear();
-        labels.clear();
-        orb.clear();
-        bfm.clear();
-        graph.clear();
+        if (bestHist != null){
+            bestHist.clear();
+        }
+        if (labels != null){
+            labels.clear();
+        }
+        if (orb != null){
+            orb.clear();
+        }
+        if (bfm != null){
+            bfm.clear();
+        }
+        if (graph != null){
+            graph.clear();
+
+        }
         Log.d(LOG_TAG, "Called BSOC Dealloc");
     }
 }

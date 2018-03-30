@@ -50,4 +50,15 @@ public class Histogram<K> {
         }
     }
 
+    @Override
+    public String toString() {
+        StringBuilder result = new StringBuilder();
+        for(K key: map.keySet()){
+            result.append(key.toString());
+            result.append(": ");
+            result.append(map.get(key));
+            result.append(" ");
+        }
+        return result.toString();
+    }
 }
